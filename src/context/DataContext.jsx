@@ -5,22 +5,26 @@ import { supabase } from '../supabaseClient.js';
 // 1. Cria o Contexto
 const DataContext = createContext();
 
-// 2. Cria um hook customizado para facilitar o acesso
+// 2. Cria um hook customizado para facilitar o acesso nos componentes
 export const useData = () => {
   return useContext(DataContext);
 };
 
-// 3. Cria o Provedor que vai buscar e fornecer os dados
+// 3. Cria o Provedor que vai gerir todos os dados da aplicação
 export const DataProvider = ({ children }) => {
+  // Estados para os dados brutos vindos do Supabase
   const [tasks, setTasks] = useState([]);
   const [shoppingList, setShoppingList] = useState([]);
   const [timeLogs, setTimeLogs] = useState([]);
   const [configs, setConfigs] = useState([]);
-  const [isLoading, setIsLoading] = useState(true); // Estado para controlar o carregamento
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Memoiza a função de busca de dados para evitar recriação a cada renderização
+  // Estado específico para a contagem de pontos que têm entrada E saída
+  const [completedTimeLogsCount, setCompletedTimeLogsCount] = useState(0);
+
+  // Função central para buscar e processar todos os dados
   const fetchAllData = useCallback(async () => {
-    setIsLoading(true); // Define como carregando antes de buscar
+    setIsLoading(true);
     try {
       const [
         tasksResponse,
@@ -34,74 +38,89 @@ export const DataProvider = ({ children }) => {
         supabase.from('appConfig').select('*').order('id')
       ]);
 
+      // Processa os registos de ponto primeiro para calcular a contagem correta
+      const timeLogsData = logsResponse.data || [];
+      setTimeLogs(timeLogsData);
+
+      // A lógica principal: filtra os logs que têm tanto entrada quanto saída
+      const completedLogs = timeLogsData.filter(log => log.clock_in_time && log.clock_out_time);
+      setCompletedTimeLogsCount(completedLogs.length);
+
+      // Define os outros estados
       setTasks(tasksResponse.data || []);
       setShoppingList(shoppingResponse.data || []);
-      setTimeLogs(logsResponse.data || []);
       setConfigs(configResponse.data || []);
+
     } catch (error) {
-      console.error("Erro ao buscar dados:", error);
+      console.error("Erro ao buscar dados do Supabase:", error);
     } finally {
-      setIsLoading(false); // Define como não carregando após a busca terminar
+      setIsLoading(false);
     }
   }, []);
 
+  // Efeito para buscar os dados na montagem do componente e ouvir atualizações
   useEffect(() => {
-    fetchAllData(); // Busca inicial de dados
-
-    // Inscrição para mudanças em tempo real
+    fetchAllData();
+    
     const subscription = supabase.channel('schema-db-changes').on(
       'postgres_changes', { event: '*', schema: 'public' },
       (payload) => {
-        console.log('Mudança recebida!', payload);
-        fetchAllData(); // Busca novamente os dados em qualquer mudança
+        console.log('Mudança no banco de dados recebida, atualizando dados...', payload);
+        fetchAllData();
       }
     ).subscribe();
 
-    // Limpa a inscrição ao desmontar o componente
     return () => {
       supabase.removeChannel(subscription);
     };
   }, [fetchAllData]);
   
-  // Funções de manipulação de dados (com atualizações otimistas da UI)
+  // Funções para manipular os dados, com atualização otimista da UI
   const addTask = async (text) => {
     const { data, error } = await supabase.from('dailyTasks').insert([{ text, completed: false }]).select().single();
     if (!error) setTasks(current => [data, ...current]);
     return { data, error };
   };
+  
   const deleteTask = async (id) => {
     const { error } = await supabase.from('dailyTasks').delete().eq('id', id);
     if (!error) setTasks(current => current.filter(task => task.id !== id));
     return { error };
   };
+  
   const clearShoppingList = async () => {
     const { error } = await supabase.from('shoppingList').delete().gt('id', 0);
     if (!error) setShoppingList([]);
     return { error };
   };
+  
   const addConfig = async (newConfig) => {
     const { data, error } = await supabase.from('appConfig').insert([newConfig]).select().single();
     if (!error) setConfigs(current => [...current, data]);
     return { data, error };
   };
+  
   const updateConfig = async (id, updatedConfig) => {
     const { data, error } = await supabase.from('appConfig').update(updatedConfig).eq('id', id).select().single();
     if (!error) setConfigs(current => current.map(c => c.id === id ? data : c));
     return { data, error };
   };
+  
   const deleteConfig = async (id) => {
     const { error } = await supabase.from('appConfig').delete().eq('id', id);
     if (!error) setConfigs(current => current.filter(c => c.id !== id));
     return { error };
   };
 
+  // Objeto com todos os valores e funções que serão disponibilizados para a aplicação
   const value = {
     tasks,
     shoppingList,
     timeLogs,
     configs,
-    isLoading, // Fornece o estado de carregamento
-    refreshData: fetchAllData, // Fornece a função de atualização
+    isLoading,
+    completedTimeLogsCount, // A nova contagem correta
+    refreshData: fetchAllData, // Função para o botão de atualizar
     addTask,
     deleteTask,
     clearShoppingList,
@@ -112,5 +131,9 @@ export const DataProvider = ({ children }) => {
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 };
+
+children}</DataContext.Provider>;
+};
+
 
 
