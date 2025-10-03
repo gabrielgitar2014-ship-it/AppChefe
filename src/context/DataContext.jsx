@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useContext, createContext, useCallback } from 'react';
-// Caminho de importação corrigido para o cliente Supabase
 import { supabase } from '../supabaseClient.js'; 
 
 // 1. Cria o Contexto
@@ -38,15 +37,12 @@ export const DataProvider = ({ children }) => {
         supabase.from('appConfig').select('*').order('id')
       ]);
 
-      // Processa os registos de ponto primeiro para calcular a contagem correta
       const timeLogsData = logsResponse.data || [];
       setTimeLogs(timeLogsData);
-
-      // A lógica principal: filtra os logs que têm tanto entrada quanto saída
+      
       const completedLogs = timeLogsData.filter(log => log.clock_in_time && log.clock_out_time);
       setCompletedTimeLogsCount(completedLogs.length);
 
-      // Define os outros estados
       setTasks(tasksResponse.data || []);
       setShoppingList(shoppingResponse.data || []);
       setConfigs(configResponse.data || []);
@@ -112,15 +108,14 @@ export const DataProvider = ({ children }) => {
     return { error };
   };
 
-  // Objeto com todos os valores e funções que serão disponibilizados para a aplicação
   const value = {
     tasks,
     shoppingList,
     timeLogs,
     configs,
     isLoading,
-    completedTimeLogsCount, // A nova contagem correta
-    refreshData: fetchAllData, // Função para o botão de atualizar
+    completedTimeLogsCount,
+    refreshData: fetchAllData,
     addTask,
     deleteTask,
     clearShoppingList,
@@ -129,11 +124,10 @@ export const DataProvider = ({ children }) => {
     deleteConfig,
   };
 
-  return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
+  return (
+    <DataContext.Provider value={value}>
+      {children}
+    </DataContext.Provider>
+  );
 };
-
-children}</DataContext.Provider>;
-};
-
-
 
