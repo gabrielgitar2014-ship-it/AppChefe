@@ -12,10 +12,10 @@ import {
 } from 'lucide-react';
 
 // Importação das suas páginas
-import TasksScreen from './Tasks.jsx';
-import ShoppingListScreen from './Shop.jsx';
-import TimeLogScreen from './Ponto.jsx';
-import SettingsScreen from './Config.jsx';
+import TasksScreen from '../pages/Tasks';
+import ShoppingListScreen from '../pages/Shop';
+import TimeLogScreen from '../pages/Ponto';
+import SettingsScreen from '../pages/Config';
 
 // Componentes de UI
 const StatCard = ({ title, value, icon: Icon, color }) => (
@@ -115,5 +115,6 @@ function MainLayout() {
 }
 
 export default MainLayout;
+
 
 
