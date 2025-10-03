@@ -30,6 +30,7 @@ const StatCard = ({ title, value, icon: Icon, color }) => (
   </div>
 );
 
+// Componente de UI reutilizável para os ícones de navegação
 const NavIcon = ({ to, icon: Icon, label }) => (
   <Link to={to} className="flex flex-col items-center gap-2 text-gray-300 hover:text-white transition-colors group">
     <div className="w-24 h-24 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:bg-white/20 transition-all">
@@ -39,26 +40,22 @@ const NavIcon = ({ to, icon: Icon, label }) => (
   </Link>
 );
 
-// Componente da Página do Dashboard
+// Componente que renderiza a página do Dashboard
 const DashboardPage = () => {
-  // Pega os novos valores do contexto
-  const { tasks = [], timeLogs = [], isLoading, refreshData } = useData();
+  const { tasks = [], isLoading, refreshData, completedTimeLogsCount } = useData();
   const completedTasksCount = tasks.filter(task => task.completed).length;
-  const timeLogsCount = timeLogs.length;
 
   return (
     <div className="p-4 sm:p-6 space-y-10">
       <div>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-white">Resumo Geral</h2>
-          {/* Botão de Atualizar */}
           <button 
             onClick={refreshData} 
             disabled={isLoading}
             className="text-white/70 hover:text-white disabled:text-white/40 disabled:cursor-not-allowed transition-colors p-2 rounded-full hover:bg-white/10"
             aria-label="Atualizar dados"
           >
-            {/* Ícone com animação de rotação durante o carregamento */}
             <RefreshCw size={22} className={isLoading ? 'animate-spin' : ''} />
           </button>
         </div>
@@ -70,8 +67,8 @@ const DashboardPage = () => {
             color="bg-green-500"
           />
           <StatCard 
-            title="Registos de Ponto" 
-            value={timeLogsCount} 
+            title="Pontos Concluídos" 
+            value={completedTimeLogsCount} 
             icon={Timer}
             color="bg-blue-500"
           />
@@ -91,7 +88,7 @@ const DashboardPage = () => {
 };
 
 
-// Componente Principal do Layout
+// Componente principal do Layout que organiza a aplicação
 function MainLayout() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-indigo-900 text-white font-sans">
@@ -115,6 +112,7 @@ function MainLayout() {
 }
 
 export default MainLayout;
+
 
 
 
