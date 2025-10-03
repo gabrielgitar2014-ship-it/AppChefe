@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, createContext, useCallback } from 'react';
 // Caminho de importação corrigido para o cliente Supabase
-import { supabase } from './supabaseClient.js'; 
+import { supabase } from '../supabaseClient.js'; 
 
 // 1. Cria o Contexto
 const DataContext = createContext();
@@ -112,4 +112,5 @@ export const DataProvider = ({ children }) => {
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 };
+
 
